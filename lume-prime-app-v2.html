@@ -650,6 +650,7 @@ TOM: elegante, minimalista, sofisticado. Sem exageros. Foco na transformação d
 
 <script>
 const CLIENT_ID = 'e13c51811f47ac2354f9f0ab70888db9';
+const PROXY_URL = 'https://lp-proxy.onrender.com';
 let descGerada = '';
 let produtosSalvos = JSON.parse(localStorage.getItem('lp_produtos') || '[]');
 let appBridgeApp = null;
@@ -882,11 +883,11 @@ async function publicar() {
   };
 
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json`, {
+    const secret = localStorage.getItem('lp_secret') || document.getElementById('cfg-secret').value.trim();
+    const res = await fetch(`${PROXY_URL}/api/products`, {
       method: 'POST',
-      headers,
-      body: JSON.stringify(body)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop: domain, token: secret, product: body.product })
     });
     const data = await res.json();
 
@@ -947,8 +948,8 @@ async function carregarProdutos() {
 
   loader.classList.add('show');
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json?limit=20`, { headers });
+    const secret = localStorage.getItem('lp_secret') || '';
+    const res = await fetch(`${PROXY_URL}/api/products?shop=${domain}&token=${secret}`);
     const data = await res.json();
     if (data.products) {
       const lista = data.products.map(p => ({
@@ -992,11 +993,12 @@ function renderProdutos() {
 
 async function testarConexao() {
   const domain = localStorage.getItem('lp_domain') || document.getElementById('cfg-domain').value.trim();
+  const secret = localStorage.getItem('lp_secret') || document.getElementById('cfg-secret').value.trim();
   const result = document.getElementById('cfg-result');
 
-  if (!domain) {
+  if (!domain || !secret) {
     result.className = 'alert alert-error show';
-    result.textContent = 'Domínio não configurado.';
+    result.textContent = 'Preencha a chave secreta e o domínio.';
     return;
   }
 
@@ -1004,12 +1006,11 @@ async function testarConexao() {
   result.textContent = 'Testando conexão...';
 
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch(`https://${domain}/admin/api/2024-01/shop.json`, { headers });
+    const res = await fetch(`${PROXY_URL}/api/shop?shop=${domain}&token=${secret}`);
     const data = await res.json();
     if (data.shop) {
       result.className = 'alert alert-success show';
-      result.textContent = `Conectado! Loja: ${data.shop.name}`;
+      result.textContent = `Conectado com sucesso! Loja: ${data.shop.name}`;
     } else {
       result.className = 'alert alert-error show';
       result.textContent = 'Erro: ' + JSON.stringify(data.errors || 'credenciais inválidas');
@@ -1040,7 +1041,6 @@ function salvarConfig() {
   result.className = 'alert alert-success show';
   result.textContent = 'Configurações salvas com sucesso!';
 }
-
 function salvarPrompt() {
   localStorage.setItem('lp_prompt', document.getElementById('cfg-prompt').value);
   alert('Prompt salvo!');
