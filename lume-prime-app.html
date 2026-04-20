@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lume Prime IA — Importador de Produtos</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --border: #e1e3e5;
+    --text: #202223;
+    --text-muted: #6d7175;
+    --accent: #008060;
+    --accent-hover: #006e52;
+    --accent-light: #e3f1ec;
+    --danger: #d72c0d;
+    --danger-light: #fdf0ed;
+    --warning: #ffc453;
+    --warning-light: #fff5e8;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .topbar-brand .logo {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 0;
+  }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* LAYOUT */
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .card-body { padding: 20px; }
+
+  /* FORM */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .form-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  input[type=text], input[type=password], input[type=number], textarea, select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,128,96,0.15);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    font-family: inherit;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+  }
+  .btn-full { width: 100%; justify-content: center; padding: 10px 16px; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-green { background: var(--accent-light); color: var(--accent); }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+  .badge-gray { background: var(--bg); color: var(--text-muted); }
+  .badge-yellow { background: var(--warning-light); color: #7a4e00; }
+
+  /* ALERTS */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: var(--accent-light); color: var(--accent-hover); border: 1px solid #b3d9cc; }
+  .alert-error { background: var(--danger-light); color: var(--danger); border: 1px solid #f4c0b4; }
+  .alert-info { background: #e8f0fe; color: #1a56db; border: 1px solid #bfcffa; }
+
+  /* LOADER */
+  .loader {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 12px 0;
+  }
+  .loader.show { display: flex; }
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* PRODUCT PREVIEW */
+  .preview-desc {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    color: var(--text);
+  }
+
+  /* PRODUCT LIST */
+  .product-list { display: flex; flex-direction: column; gap: 12px; }
+  .product-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .product-item-info { flex: 1; }
+  .product-item-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .product-item-meta { font-size: 12px; color: var(--text-muted); }
+  .product-item-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* STEPS */
+  .steps-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 0;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .step-item:last-child { flex: none; }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .step-item.active .step-num { border-color: var(--accent); color: var(--accent); }
+  .step-item.done .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+  .step-label { font-size: 13px; color: var(--text-muted); }
+  .step-item.active .step-label { color: var(--text); font-weight: 500; }
+  .step-item.done .step-label { color: var(--accent); }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 8px; }
+  .step-item.done + .step-line { background: var(--accent); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* CONFIG STATUS */
+  .config-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+  }
+  .status-dot.connected { background: var(--accent); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title { font-size: 16px; font-weight: 600; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="logo">L</div>
+    Lume Prime IA
+  </div>
+  <div class="topbar-actions">
+    <div class="config-status" id="conn-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Não conectado</span>
+    </div>
+    <button class="btn btn-secondary" onclick="showPage('config')">⚙ Configurações</button>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" id="tab-importar" onclick="showPage('importar')">Importar Produto</div>
+  <div class="nav-tab" id="tab-produtos" onclick="showPage('produtos')">Meus Produtos</div>
+  <div class="nav-tab" id="tab-config" onclick="showPage('config')">Configurações</div>
+</div>
+
+<div class="main">
+
+  <!-- ==================== IMPORTAR ==================== -->
+  <div class="page active" id="page-importar">
+
+    <div class="steps-bar">
+      <div class="step-item active" id="si1">
+        <div class="step-num">1</div>
+        <div class="step-label">Dados do produto</div>
+      </div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-item" id="si2">
+        <div class="step-num">2</div>
+        <div class="step-label">Gerar com IA</div>
+      </div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-item" id="si3">
+        <div class="step-num">3</div>
+        <div class="step-label">Revisar</div>
+      </div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-item" id="si4">
+        <div class="step-num">4</div>
+        <div class="step-label">Publicar</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: DADOS -->
+    <div id="step-dados">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Dados do produto (AliExpress)</div>
+          <span class="badge badge-gray">Passo 1 de 4</span>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info show">
+            Cole os dados do produto do AliExpress nos campos abaixo. Quanto mais informações, melhor a descrição gerada.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nome do produto *</label>
+            <input type="text" id="p-nome" placeholder="Ex: Luminária Pendente Industrial Vintage Preto Fosco" />
+          </div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Preço de venda (R$) *</label>
+              <input type="text" id="p-preco" placeholder="Ex: 349,90" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preço original / De (R$)</label>
+              <input type="text" id="p-preco-de" placeholder="Ex: 499,90" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Variações disponíveis</label>
+            <input type="text" id="p-variacoes" placeholder="Ex: Preto, Dourado, Branco | Tamanhos: P, M, G" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Especificações técnicas</label>
+            <textarea id="p-specs" rows="5" placeholder="Tensão: 110/220V&#10;Material: Metal + Vidro&#10;Tamanho: 25cm diâmetro&#10;Cabo: 1,5m ajustável&#10;Lâmpada inclusa: Sim (E27 LED)&#10;Cobertura: 5 a 10m²"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Descrição / características do produto</label>
+            <textarea id="p-desc" rows="4" placeholder="Cole a descrição original do AliExpress ou pontos principais do produto..."></textarea>
+          </div>
+
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Ambientes indicados</label>
+              <input type="text" id="p-ambientes" placeholder="Ex: sala de jantar, cozinha, bar" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">O que está incluso</label>
+              <input type="text" id="p-incluso" placeholder="Ex: 1x Luminária, 1x LED, Manual" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="gerarIA()">Gerar descrição com IA →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: IA -->
+    <div id="step-ia" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Descrição gerada pela IA</div>
+          <span class="badge badge-gray">Passo 2 de 4</span>
+        </div>
+        <div class="card-body">
+          <div class="loader show" id="ia-loader">
+            <div class="spinner"></div>
+            <span id="ia-loader-txt">Gerando descrição no padrão Lume Prime...</span>
+          </div>
+          <div id="ia-content" style="display:none">
+            <div class="alert alert-success" id="ia-alert"></div>
+            <div class="form-group">
+              <label class="form-label">Descrição gerada (editável)</label>
+              <textarea id="ia-resultado" rows="14"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-secondary" onclick="voltarDados()">← Editar dados</button>
+              <button class="btn btn-secondary" onclick="gerarIA()">↺ Gerar novamente</button>
+              <button class="btn btn-primary" onclick="irRevisar()">Revisar produto →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: REVISAR -->
+    <div id="step-revisar" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Revisar produto</div>
+          <span class="badge badge-gray">Passo 3 de 4</span>
+        </div>
+        <div class="card-body">
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Título do produto</label>
+              <input type="text" id="rev-titulo" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo de produto</label>
+              <input type="text" id="rev-tipo" value="Luminária" />
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label class="form-label">Preço (R$)</label>
+              <input type="text" id="rev-preco" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select id="rev-status">
+                <option value="active">Ativo — visível na loja</option>
+                <option value="draft">Rascunho — oculto</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags</label>
+            <input type="text" id="rev-tags" value="luminária, pendente, iluminação, decoração, lume prime" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prévia da descrição</label>
+            <div class="preview-desc" id="rev-preview"></div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="voltarIA()">← Editar descrição</button>
+            <button class="btn btn-primary" onclick="irPublicar()">Publicar na Shopify →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: PUBLICAR -->
+    <div id="step-publicar" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Publicar na Shopify</div>
+          <span class="badge badge-gray">Passo 4 de 4</span>
+        </div>
+        <div class="card-body">
+          <div class="loader" id="pub-loader">
+            <div class="spinner"></div>
+            <span>Publicando produto na sua loja...</span>
+          </div>
+          <div class="alert" id="pub-result"></div>
+          <div id="pub-actions">
+            <div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Resumo do produto</div>
+              <div style="font-weight:600;margin-bottom:4px" id="pub-titulo-preview"></div>
+              <div style="font-size:13px;color:var(--text-muted)" id="pub-info-preview"></div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-secondary" onclick="voltarRevisar()">← Voltar</button>
+              <button class="btn btn-primary" id="btn-publicar" onclick="publicar()">Publicar agora</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== PRODUTOS ==================== -->
+  <div class="page" id="page-produtos">
+    <div class="section-header">
+      <div class="section-title">Produtos publicados</div>
+      <button class="btn btn-primary" onclick="showPage('importar')">+ Novo produto</button>
+    </div>
+
+    <div class="loader" id="list-loader">
+      <div class="spinner"></div>
+      <span>Carregando produtos...</span>
+    </div>
+
+    <div id="product-list-wrap">
+      <div class="empty-state" id="empty-produtos">
+        <div class="empty-state-icon">📦</div>
+        <div class="empty-state-title">Nenhum produto ainda</div>
+        <div style="margin-bottom:16px">Importe seu primeiro produto do AliExpress.</div>
+        <button class="btn btn-primary" onclick="showPage('importar')">Importar produto</button>
+      </div>
+      <div class="product-list" id="product-list"></div>
+    </div>
+  </div>
+
+  <!-- ==================== CONFIG ==================== -->
+  <div class="page" id="page-config">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Configurações da API</div>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info show" style="display:block">
+          Suas credenciais são salvas apenas neste navegador (localStorage). Nunca são enviadas a servidores externos.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Client ID do app Shopify</label>
+          <input type="text" id="cfg-client-id" value="e13c51811f47ac2354f9f0ab70888db9" readonly style="color:var(--text-muted)" />
+          <div class="form-hint">Preenchido automaticamente.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chave secreta da API (shpss_...)</label>
+          <input type="password" id="cfg-secret" placeholder="Cole aqui sua chave shpss_..." />
+          <div class="form-hint">Encontre em: Dev Dashboard → PAGES_CLAUDE IA → Configurações → Chave secreta.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Domínio da loja (.myshopify.com)</label>
+          <input type="text" id="cfg-domain" placeholder="lumeprime.myshopify.com" />
+        </div>
+
+        <hr class="divider">
+
+        <div class="alert" id="cfg-result"></div>
+
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="testarConexao()">Testar conexão</button>
+          <button class="btn btn-primary" onclick="salvarConfig()">Salvar configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Padrão de descrição</div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Prompt base (padrão Lume Prime)</label>
+          <textarea id="cfg-prompt" rows="8">Você é copywriter especialista em iluminação decorativa de alto padrão. Crie uma descrição elegante e sofisticada no padrão Lume Prime.
+
+ESTRUTURA OBRIGATÓRIA:
+1. Parágrafo de abertura (2-3 linhas) sobre transformação do espaço
+2. CARACTERÍSTICAS PRINCIPAIS: (4-5 itens em maiúsculo + descrição)
+3. ESPECIFICAÇÕES TÉCNICAS: (lista técnica)
+4. O QUE ESTÁ INCLUSO: (lista numerada)
+
+TOM: elegante, minimalista, sofisticado. Sem exageros. Foco na transformação do ambiente.</textarea>
+        </div>
+        <button class="btn btn-secondary" onclick="salvarPrompt()">Salvar prompt</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CLIENT_ID = 'e13c51811f47ac2354f9f0ab70888db9';
+let descGerada = '';
+let produtosSalvos = JSON.parse(localStorage.getItem('lp_produtos') || '[]');
+
+function init() {
+  const secret = localStorage.getItem('lp_secret') || '';
+  const domain = localStorage.getItem('lp_domain') || '';
+  const prompt = localStorage.getItem('lp_prompt') || '';
+
+  if (secret) document.getElementById('cfg-secret').value = secret;
+  if (domain) {
+    document.getElementById('cfg-domain').value = domain;
+    document.getElementById('status-dot').className = 'status-dot connected';
+    document.getElementById('status-text').textContent = domain;
+  }
+  if (prompt) document.getElementById('cfg-prompt').value = prompt;
+  renderProdutos();
+}
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  document.getElementById('tab-' + p).classList.add('active');
+  if (p === 'produtos') carregarProdutos();
+}
+
+function setImportStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const si = document.getElementById('si' + i);
+    if (i < n) { si.className = 'step-item done'; }
+    else if (i === n) { si.className = 'step-item active'; }
+    else { si.className = 'step-item'; }
+  }
+}
+
+function voltarDados() {
+  document.getElementById('step-ia').style.display = 'none';
+  document.getElementById('step-dados').style.display = 'block';
+  setImportStep(1);
+}
+function voltarIA() {
+  document.getElementById('step-revisar').style.display = 'none';
+  document.getElementById('step-ia').style.display = 'block';
+  setImportStep(2);
+}
+function voltarRevisar() {
+  document.getElementById('step-publicar').style.display = 'none';
+  document.getElementById('step-revisar').style.display = 'block';
+  setImportStep(3);
+}
+
+async function gerarIA() {
+  const nome = document.getElementById('p-nome').value.trim();
+  if (!nome) { alert('Preencha o nome do produto.'); return; }
+
+  document.getElementById('step-dados').style.display = 'none';
+  document.getElementById('step-ia').style.display = 'block';
+  document.getElementById('ia-loader').classList.add('show');
+  document.getElementById('ia-content').style.display = 'none';
+  setImportStep(2);
+
+  const msgs = [
+    'Gerando descrição no padrão Lume Prime...',
+    'Aplicando copywriting persuasivo...',
+    'Otimizando para conversão...',
+    'Quase pronto...'
+  ];
+  let mi = 0;
+  const iv = setInterval(() => {
+    document.getElementById('ia-loader-txt').textContent = msgs[mi = (mi + 1) % msgs.length];
+  }, 2500);
+
+  const promptBase = localStorage.getItem('lp_prompt') || document.getElementById('cfg-prompt').value;
+  const variacoes = document.getElementById('p-variacoes').value;
+  const specs = document.getElementById('p-specs').value;
+  const desc = document.getElementById('p-desc').value;
+  const ambientes = document.getElementById('p-ambientes').value;
+  const incluso = document.getElementById('p-incluso').value;
+
+  const userPrompt = `${promptBase}
+
+PRODUTO:
+Nome: ${nome}
+${variacoes ? 'Variações: ' + variacoes : ''}
+${specs ? 'Especificações:\n' + specs : ''}
+${desc ? 'Descrição/características:\n' + desc : ''}
+${ambientes ? 'Ambientes: ' + ambientes : ''}
+${incluso ? 'Incluso: ' + incluso : ''}
+
+Gere apenas a descrição, sem explicações adicionais.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    const data = await res.json();
+    descGerada = data.content?.map(b => b.text || '').join('') || 'Erro ao gerar.';
+
+    document.getElementById('ia-resultado').value = descGerada;
+    const alert = document.getElementById('ia-alert');
+    alert.className = 'alert alert-success show';
+    alert.textContent = 'Descrição gerada com sucesso! Revise e edite se necessário.';
+    document.getElementById('ia-content').style.display = 'block';
+  } catch (e) {
+    document.getElementById('ia-resultado').value = 'Erro de conexão. Tente novamente.';
+    document.getElementById('ia-content').style.display = 'block';
+  }
+
+  clearInterval(iv);
+  document.getElementById('ia-loader').classList.remove('show');
+}
+
+function irRevisar() {
+  descGerada = document.getElementById('ia-resultado').value;
+  document.getElementById('rev-titulo').value = document.getElementById('p-nome').value;
+  document.getElementById('rev-preco').value = document.getElementById('p-preco').value;
+  document.getElementById('rev-preview').textContent = descGerada;
+  document.getElementById('step-ia').style.display = 'none';
+  document.getElementById('step-revisar').style.display = 'block';
+  setImportStep(3);
+}
+
+function irPublicar() {
+  const titulo = document.getElementById('rev-titulo').value;
+  const preco = document.getElementById('rev-preco').value;
+  const status = document.getElementById('rev-status').value;
+  document.getElementById('pub-titulo-preview').textContent = titulo;
+  document.getElementById('pub-info-preview').textContent = `R$ ${preco} · ${status === 'active' ? 'Ativo' : 'Rascunho'}`;
+  document.getElementById('pub-result').className = 'alert';
+  document.getElementById('pub-actions').style.display = 'block';
+  document.getElementById('step-revisar').style.display = 'none';
+  document.getElementById('step-publicar').style.display = 'block';
+  setImportStep(4);
+}
+
+async function publicar() {
+  const secret = localStorage.getItem('lp_secret');
+  const domain = localStorage.getItem('lp_domain');
+  if (!secret || !domain) {
+    alert('Configure a chave secreta e o domínio em Configurações primeiro.');
+    return;
+  }
+
+  const titulo = document.getElementById('rev-titulo').value.trim();
+  const precoStr = document.getElementById('rev-preco').value.replace(',', '.');
+  const preco = parseFloat(precoStr) || 0;
+  const status = document.getElementById('rev-status').value;
+  const tipo = document.getElementById('rev-tipo').value;
+  const tags = document.getElementById('rev-tags').value;
+  const descFinal = document.getElementById('ia-resultado').value;
+
+  const btn = document.getElementById('btn-publicar');
+  btn.disabled = true;
+  document.getElementById('pub-loader').classList.add('show');
+  document.getElementById('pub-actions').style.display = 'none';
+
+  const body = {
+    product: {
+      title: titulo,
+      body_html: descFinal.replace(/\n/g, '<br>'),
+      vendor: 'Lume Prime',
+      product_type: tipo,
+      tags: tags,
+      status: status,
+      variants: [{ price: preco.toFixed(2), requires_shipping: true }]
+    }
+  };
+
+  try {
+    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': secret
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if (data.product && data.product.id) {
+      const prod = {
+        id: data.product.id,
+        titulo,
+        preco: preco.toFixed(2),
+        status,
+        data: new Date().toLocaleDateString('pt-BR'),
+        url: `https://${domain}/admin/products/${data.product.id}`
+      };
+      produtosSalvos.unshift(prod);
+      localStorage.setItem('lp_produtos', JSON.stringify(produtosSalvos));
+
+      const r = document.getElementById('pub-result');
+      r.className = 'alert alert-success show';
+      r.innerHTML = `Produto publicado com sucesso! ID: ${data.product.id}<br><a href="${prod.url}" target="_blank" style="color:inherit;font-weight:600">Ver no admin da Shopify →</a>`;
+
+      setTimeout(() => resetImportar(), 4000);
+    } else {
+      const erro = data.errors ? JSON.stringify(data.errors) : 'Erro desconhecido.';
+      const r = document.getElementById('pub-result');
+      r.className = 'alert alert-error show';
+      r.textContent = 'Erro: ' + erro;
+      document.getElementById('pub-actions').style.display = 'block';
+    }
+  } catch (e) {
+    const r = document.getElementById('pub-result');
+    r.className = 'alert alert-error show';
+    r.textContent = 'Erro de conexão. Verifique a chave e o domínio.';
+    document.getElementById('pub-actions').style.display = 'block';
+  }
+
+  document.getElementById('pub-loader').classList.remove('show');
+  btn.disabled = false;
+}
+
+function resetImportar() {
+  ['p-nome','p-preco','p-preco-de','p-variacoes','p-specs','p-desc','p-ambientes','p-incluso'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('step-publicar').style.display = 'none';
+  document.getElementById('step-dados').style.display = 'block';
+  setImportStep(1);
+  showPage('produtos');
+}
+
+async function carregarProdutos() {
+  const secret = localStorage.getItem('lp_secret');
+  const domain = localStorage.getItem('lp_domain');
+  const wrap = document.getElementById('product-list-wrap');
+  const loader = document.getElementById('list-loader');
+
+  renderProdutos();
+
+  if (!secret || !domain) return;
+
+  loader.classList.add('show');
+  try {
+    const res = await fetch(`https://${domain}/admin/api/2024-01/products.json?limit=20`, {
+      headers: { 'X-Shopify-Access-Token': secret }
+    });
+    const data = await res.json();
+    if (data.products) {
+      const lista = data.products.map(p => ({
+        id: p.id,
+        titulo: p.title,
+        preco: p.variants[0]?.price || '0',
+        status: p.status,
+        data: new Date(p.created_at).toLocaleDateString('pt-BR'),
+        url: `https://${domain}/admin/products/${p.id}`
+      }));
+      produtosSalvos = lista;
+      localStorage.setItem('lp_produtos', JSON.stringify(lista));
+      renderProdutos();
+    }
+  } catch (e) {}
+  loader.classList.remove('show');
+}
+
+function renderProdutos() {
+  const list = document.getElementById('product-list');
+  const empty = document.getElementById('empty-produtos');
+  if (!produtosSalvos.length) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = produtosSalvos.map(p => `
+    <div class="product-item">
+      <div class="product-item-info">
+        <div class="product-item-title">${p.titulo}</div>
+        <div class="product-item-meta">R$ ${p.preco} · ${p.data}</div>
+      </div>
+      <div class="product-item-actions">
+        <span class="badge ${p.status === 'active' ? 'badge-green' : 'badge-yellow'}">${p.status === 'active' ? 'Ativo' : 'Rascunho'}</span>
+        <a href="${p.url}" target="_blank" class="btn btn-secondary" style="font-size:13px;padding:6px 12px">Ver no admin</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function testarConexao() {
+  const secret = document.getElementById('cfg-secret').value.trim();
+  const domain = document.getElementById('cfg-domain').value.trim();
+  const result = document.getElementById('cfg-result');
+
+  if (!secret || !domain) {
+    result.className = 'alert alert-error show';
+    result.textContent = 'Preencha a chave secreta e o domínio.';
+    return;
+  }
+
+  result.className = 'alert alert-info show';
+  result.textContent = 'Testando conexão...';
+
+  try {
+    const res = await fetch(`https://${domain}/admin/api/2024-01/shop.json`, {
+      headers: { 'X-Shopify-Access-Token': secret }
+    });
+    const data = await res.json();
+    if (data.shop) {
+      result.className = 'alert alert-success show';
+      result.textContent = `Conectado com sucesso! Loja: ${data.shop.name}`;
+    } else {
+      result.className = 'alert alert-error show';
+      result.textContent = 'Erro: credenciais inválidas.';
+    }
+  } catch (e) {
+    result.className = 'alert alert-error show';
+    result.textContent = 'Erro de conexão. Verifique a chave e o domínio.';
+  }
+}
+
+function salvarConfig() {
+  const secret = document.getElementById('cfg-secret').value.trim();
+  const domain = document.getElementById('cfg-domain').value.trim();
+  const result = document.getElementById('cfg-result');
+
+  if (!secret || !domain) {
+    result.className = 'alert alert-error show';
+    result.textContent = 'Preencha todos os campos.';
+    return;
+  }
+
+  localStorage.setItem('lp_secret', secret);
+  localStorage.setItem('lp_domain', domain);
+
+  document.getElementById('status-dot').className = 'status-dot connected';
+  document.getElementById('status-text').textContent = domain;
+
+  result.className = 'alert alert-success show';
+  result.textContent = 'Configurações salvas com sucesso!';
+}
+
+function salvarPrompt() {
+  localStorage.setItem('lp_prompt', document.getElementById('cfg-prompt').value);
+  alert('Prompt salvo!');
+}
+
+init();
+</script>
+</body>
+</html>
